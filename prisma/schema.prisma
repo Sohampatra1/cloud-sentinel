@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Scan {
+  id            String    @id @default(cuid())
+  timestamp     DateTime  @default(now())
+  status        String    @default("scanning")
+  totalFindings Int       @default(0)
+  riskScore     Float     @default(0)
+  criticalCount Int       @default(0)
+  highCount     Int       @default(0)
+  mediumCount   Int       @default(0)
+  lowCount      Int       @default(0)
+  region        String    @default("ap-south-1")
+  findings      Finding[]
+  analysis      Analysis?
+}
+
+model Finding {
+  id           String @id @default(cuid())
+  scanId       String
+  scan         Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  findingKey   String
+  category     String
+  resource     String
+  severity     String
+  title        String
+  description  String @db.Text
+  cisBenchmark String
+  region       String
+
+  @@index([scanId])
+  @@index([severity])
+  @@index([category])
+}
+
+model Analysis {
+  id              String   @id @default(cuid())
+  scanId          String   @unique
+  scan            Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  categorySummary Json
+  topUrgent       Json
+  quickWins       Json
+  cisPosture      Json
+  attackPaths     Json
+  executiveReport Json?
+  createdAt       DateTime @default(now())
+}
